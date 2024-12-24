@@ -56,6 +56,13 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-ros-gz \
     && rm -rf /var/lib/apt/lists/*
 
+# Install ROS 2 controllers and related packages
+RUN apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-controllers \
+    ros-${ROS_DISTRO}-hardware-interface \
+    && rm -rf /var/lib/apt/lists/*
+
 # Add NVIDIA support
 RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -64,6 +71,11 @@ RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --
     && apt-get update \
     && apt-get install -y nvidia-container-toolkit \
     && rm -rf /var/lib/apt/lists/*
+
+
+# Adding rqt support to ros2
+RUN apt update && apt install -y \
+'~nros-jazzy-rqt*'
 
 # Set working directory
 WORKDIR /root
