@@ -77,12 +77,14 @@ RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --
 RUN apt update && apt install -y \
 '~nros-jazzy-rqt*'
 
+# Adding turtlesim
+RUN apt install ros-jazzy-turtlesim
+
 # Set working directory
 WORKDIR /root
 
-# Source ROS 2 and Gazebo setup at runtime
+# Set the default shell to bash
 SHELL ["/bin/bash", "-c"]
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 
 # Add entrypoint script to handle runtime directory permissions
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

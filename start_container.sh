@@ -14,9 +14,15 @@ cleanup_containers() {
         echo "No running containers found."
     else
         docker stop $(docker ps -q)
+        echo "Stopped all running containers."
     fi
-    docker rm $(docker ps -aq)
-    echo "Stopping and removing all containers"
+
+    if [ -z "$(docker ps -a -q)" ]; then
+        echo "No containers to remove."
+    else
+        docker rm $(docker ps -a -q)
+        echo "Removed all containers."
+    fi
 }
 
 # Check if the container is running
@@ -41,7 +47,7 @@ else
         --env=XDG_RUNTIME_DIR=/tmp/runtime-docker \
         --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw \
         --volume=/tmp/runtime-docker:/tmp/runtime-docker:rw \
-        --volume=/home/tony/workspace_ros/src:/root/ros2 \
+        --volume=/home/tony/workspace_ros/src:/root \
         --runtime=nvidia \
         --name $CONTAINER_NAME \
         $IMAGE_NAME \

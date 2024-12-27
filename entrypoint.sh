@@ -11,7 +11,15 @@ chmod 0700 /tmp/runtime-docker
 ls -ld /tmp/runtime-docker >> /tmp/entrypoint.log
 
 # Adding local model path to the Gazebo sim
-export GZ_SIM_RESOURCE_PATH=/root/ros2/local_models/
+export GZ_SIM_RESOURCE_PATH=/root/local_models/
+
+touch ~/.bashrc \
+&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
+
+source ~/.bashrc
+
+# Setting bootup directory as ros2
+cd /root/
 
 # Execute the main container command
 exec "$@"
