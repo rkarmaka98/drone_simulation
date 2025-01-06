@@ -80,11 +80,34 @@ RUN apt update && apt install -y \
 # Adding turtlesim
 RUN apt install ros-jazzy-turtlesim
 
-# Set working directory
-WORKDIR /root
+# Installing colcon build package
+RUN apt install python3-colcon-common-extensions
 
-# Set the default shell to bash
-SHELL ["/bin/bash", "-c"]
+# Install mavros for gcs simulation with with flight controller
+RUN apt update && apt install -y \
+    ros-${ROS_DISTRO}-mavros ros-${ROS_DISTRO}-mavros-extras
+
+# Clone PX4 Autopilot repository and set up environment
+RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive && \
+    cd PX4-Autopilot && \
+    bash ./Tools/setup/ubuntu.sh
+
+# Install QGroundControl
+RUN apt-get remove modemmanager -y \
+    && apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y \
+    && apt install libfuse2 -y \
+    && apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+
+# Install FUSE
+RUN apt-get update && apt-get install -y \
+fuse \
+&& rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user with a home directory
+RUN useradd -m -s /bin/bash qgcuser && \
+    usermod -a -G dialout qgcuser && \ 
+    mkdir -p /home/qgcuser && \
+    chown -R qgcuser:qgcuser /home/qgcuser
 
 # Add entrypoint script to handle runtime directory permissions
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -92,6 +115,15 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set the entrypoint script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Switch to non-root user
+USER qgcuser
+
+# Set working directory for the user
+WORKDIR /home/qgcuser
+
+# Set the default shell to bash
+SHELL ["/bin/bash", "-c"]
 
 # Expose Gazebo default port
 EXPOSE 11345
