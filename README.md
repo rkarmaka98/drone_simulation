@@ -1,3 +1,7 @@
+# Controlling drone visa QGroundControl
+![image](https://github.com/user-attachments/assets/9938f017-8ac8-48c7-86ed-d8cd02e63baf)
+
+
 # Docker build
 docker build -t ros2-gazebo:jazzy-harmonic .
 
