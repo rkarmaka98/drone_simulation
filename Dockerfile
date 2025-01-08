@@ -87,11 +87,6 @@ RUN apt install python3-colcon-common-extensions
 RUN apt update && apt install -y \
     ros-${ROS_DISTRO}-mavros ros-${ROS_DISTRO}-mavros-extras
 
-# Clone PX4 Autopilot repository and set up environment
-RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive && \
-    cd PX4-Autopilot && \
-    bash ./Tools/setup/ubuntu.sh
-
 # Install QGroundControl
 RUN apt-get remove modemmanager -y \
     && apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y \
@@ -105,16 +100,41 @@ fuse \
 
 # Create a non-root user with a home directory
 RUN useradd -m -s /bin/bash qgcuser && \
+    echo "qgcuser:qgcpassword" | chpasswd && \
     usermod -a -G dialout qgcuser && \ 
     mkdir -p /home/qgcuser && \
     chown -R qgcuser:qgcuser /home/qgcuser
 
+# Ensure the runtime directory exists with the correct permissions
+RUN mkdir -p /tmp/runtime-docker && \
+    chown -R qgcuser:qgcuser /tmp/runtime-docker
+
+# Install sudo and configure it to not require a password for qgcuser
+RUN apt-get update && apt-get install -y sudo && \
+    echo "qgcuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 # Add entrypoint script to handle runtime directory permissions
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /home/qgcuser/entrypoint.sh
+RUN chmod +x /home/qgcuser/entrypoint.sh
+
+# Copy the PX4 Autopilot source code from the host to the container
+COPY ./lib/PX4-Autopilot /home/qgcuser/PX4-Autopilot
+
+# Grant ownership of the PX4 directory to the non-root user
+RUN chown -R qgcuser:qgcuser /home/qgcuser/PX4-Autopilot
+
+# Copy scripts to container
+COPY ./scripts/px4_sitl_gazebo_setup.sh /home/qgcuser/
+RUN chown -R qgcuser:qgcuser /home/qgcuser/px4_sitl_gazebo_setup.sh
+COPY ./scripts/qgroundcontrol_run.sh /home/qgcuser/
+RUN chown -R qgcuser:qgcuser /home/qgcuser/qgroundcontrol_run.sh
+COPY ./scripts/QGroundControl.AppImage /home/qgcuser/
+RUN chown -R qgcuser:qgcuser /home/qgcuser/QGroundControl.AppImage
+COPY ./scripts/px4_gz_run.sh /home/qgcuser/
+RUN chown -R qgcuser:qgcuser /home/qgcuser/px4_gz_run.sh
 
 # Set the entrypoint script
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/home/qgcuser/entrypoint.sh"]
 
 # Switch to non-root user
 USER qgcuser
